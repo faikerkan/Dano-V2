@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "672372083867",
+    "project_id": "dano-v2",
+    "storage_bucket": "dano-v2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:672372083867:android:5c86a3d9997057854b0a3e",
+        "android_client_info": {
+          "package_name": "com.defakto.dano"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "672372083867-vpc0g6v0php2u3met539kej1h6s8655j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.defakto.dano",
+            "certificate_hash": "3ed29e37861aaeba111880d4a7a2c04b999ea1e3"
+          }
+        },
+        {
+          "client_id": "672372083867-1ock6vlq5cavnr8p4dnls15g0qbiu0r9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKM5CYgNKSao1GyUNEWcU5UYBD6liWKEg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "672372083867-1ock6vlq5cavnr8p4dnls15g0qbiu0r9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "672372083867-cnnas3gts1gdvu0shv07j92c4u8dfkq6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.dano"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:672372083867:android:64c3377aa0a997554b0a3e",
+        "android_client_info": {
+          "package_name": "com.example.dano"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "672372083867-1ock6vlq5cavnr8p4dnls15g0qbiu0r9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKM5CYgNKSao1GyUNEWcU5UYBD6liWKEg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "672372083867-1ock6vlq5cavnr8p4dnls15g0qbiu0r9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "672372083867-cnnas3gts1gdvu0shv07j92c4u8dfkq6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.dano"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
