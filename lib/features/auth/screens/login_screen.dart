@@ -10,29 +10,32 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  String email = '';
-  String password = '';
-  bool isLoading = false;
-  String? errorMessage;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+  String? _errorMessage;
 
   Future<void> _login() async {
     setState(() {
-      isLoading = true;
-      errorMessage = null;
+      _isLoading = true;
+      _errorMessage = null;
     });
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
-      Navigator.of(context).pop();
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+      });
     } catch (e) {
       setState(() {
-        errorMessage = 'Giriş başarısız: ${e.toString()}';
+        _errorMessage = 'Bir hata oluştu. Lütfen tekrar deneyin.';
       });
     } finally {
       setState(() {
-        isLoading = false;
+        _isLoading = false;
       });
     }
   }
@@ -42,45 +45,42 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Giriş Yap')),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(32.0),
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
-                decoration: const InputDecoration(labelText: 'E-posta'),
+                controller: _emailController,
+                decoration: const InputDecoration(hintText: 'E-posta'),
                 keyboardType: TextInputType.emailAddress,
-                onChanged: (v) => email = v,
-                validator: (v) => v == null || v.isEmpty ? 'E-posta giriniz' : null,
+                validator: (value) => value == null || value.isEmpty ? 'E-posta giriniz' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Şifre'),
+                controller: _passwordController,
+                decoration: const InputDecoration(hintText: 'Şifre'),
                 obscureText: true,
-                onChanged: (v) => password = v,
-                validator: (v) => v == null || v.length < 6 ? 'En az 6 karakter' : null,
+                validator: (value) => value == null || value.length < 6 ? 'Şifre en az 6 karakter olmalı' : null,
               ),
               const SizedBox(height: 24),
-              if (errorMessage != null)
-                Text(
-                  errorMessage!,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: Theme.of(context).colorScheme.error),
-                ),
+              if (_errorMessage != null)
+                Text(_errorMessage!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
               const SizedBox(height: 8),
-              isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: () {
+              ElevatedButton(
+                onPressed: _isLoading
+                    ? null
+                    : () {
                         if (_formKey.currentState!.validate()) {
                           _login();
                         }
                       },
-                      child: const Text('Giriş Yap'),
-                    ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Giriş Yap'),
+              ),
             ],
           ),
         ),

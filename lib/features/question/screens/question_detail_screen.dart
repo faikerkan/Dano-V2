@@ -7,62 +7,61 @@ class QuestionDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final questionRef = FirebaseFirestore.instance.collection('questions').doc(questionId);
     return Scaffold(
       appBar: AppBar(title: const Text('Soru Detayı')),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: questionRef.get(),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance.collection('questions').doc(questionId).snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>?;
+          if (data == null) {
             return const Center(child: Text('Soru bulunamadı.'));
           }
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  data['questionText'] ?? '',
-                  style: Theme.of(context).textTheme.titleLarge,
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(data['questionText'] ?? '', style: Theme.of(context).textTheme.headline1),
+                const SizedBox(height: 16),
+                Text('Durum: ${data['status'] ?? ''}'),
+                const SizedBox(height: 24),
+                const Text('Cevaplar:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('questions')
+                        .doc(questionId)
+                        .collection('answers')
+                        .orderBy('timestamp', descending: true)
+                        .snapshots(),
+                    builder: (context, answerSnapshot) {
+                      if (!answerSnapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final answers = answerSnapshot.data!.docs;
+                      if (answers.isEmpty) {
+                        return const Text('Henüz cevap yok.');
+                      }
+                      return ListView.separated(
+                        itemCount: answers.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final a = answers[index];
+                          return ListTile(
+                            title: Text(a['answerText'] ?? ''),
+                            subtitle: Text('Puan: ${a['rating']?.toString() ?? '-'}'),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-              const Divider(),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text('Cevaplar:', style: Theme.of(context).textTheme.titleMedium),
-              ),
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: questionRef.collection('answers').orderBy('timestamp').snapshots(),
-                  builder: (context, answerSnap) {
-                    if (answerSnap.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (answerSnap.hasError) {
-                      return const Center(child: Text('Cevaplar yüklenemedi.'));
-                    }
-                    final docs = answerSnap.data?.docs ?? [];
-                    if (docs.isEmpty) {
-                      return const Center(child: Text('Henüz cevap yok.'));
-                    }
-                    return ListView.builder(
-                      itemCount: docs.length,
-                      itemBuilder: (context, i) {
-                        final answer = docs[i].data() as Map<String, dynamic>;
-                        return ListTile(
-                          title: Text(answer['answerText'] ?? ''),
-                          subtitle: Text('Puan: ${answer['rating'] ?? '-'}'),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

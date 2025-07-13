@@ -12,114 +12,88 @@ class FilterScreen extends StatefulWidget {
 
 class _FilterScreenState extends State<FilterScreen> {
   final _formKey = GlobalKey<FormState>();
-  int? minAge;
-  int? maxAge;
-  String gender = 'Kadın';
-  String city = '';
-  bool isLoading = false;
-  String? errorMessage;
+  int? _minAge;
+  int? _maxAge;
+  String? _gender;
+  String? _city;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   Future<void> _submit() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
+    if (!_formKey.currentState!.validate()) return;
+    setState(() { _isLoading = true; _errorMessage = null; });
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) throw Exception('Kullanıcı bulunamadı');
-      final now = DateTime.now();
-      final questionRef = FirebaseFirestore.instance.collection('questions').doc();
-      await questionRef.set({
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      await FirebaseFirestore.instance.collection('questions').add({
         'askerId': uid,
         'questionText': widget.questionText,
         'timestamp': FieldValue.serverTimestamp(),
         'status': 'yanit_bekliyor',
         'filters': {
-          'minAge': minAge,
-          'maxAge': maxAge,
-          'gender': gender,
-          'city': city.trim(),
+          'minAge': _minAge,
+          'maxAge': _maxAge,
+          'gender': _gender,
+          'city': _city,
         },
       });
       Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
-      setState(() {
-        errorMessage = 'Soru gönderilemedi: ${e.toString()}';
-      });
+      setState(() { _errorMessage = 'Bir hata oluştu. Lütfen tekrar deneyin.'; });
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() { _isLoading = false; });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Filtreler')),
+      appBar: AppBar(title: const Text('Filtrele')),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(32.0),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      decoration: const InputDecoration(labelText: 'Min Yaş'),
-                      keyboardType: TextInputType.number,
-                      onChanged: (v) => minAge = int.tryParse(v),
-                      validator: (v) => v == null || v.isEmpty ? 'Min yaş giriniz' : null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      decoration: const InputDecoration(labelText: 'Max Yaş'),
-                      keyboardType: TextInputType.number,
-                      onChanged: (v) => maxAge = int.tryParse(v),
-                      validator: (v) => v == null || v.isEmpty ? 'Max yaş giriniz' : null,
-                    ),
-                  ),
-                ],
+              TextFormField(
+                decoration: const InputDecoration(hintText: 'Minimum Yaş'),
+                keyboardType: TextInputType.number,
+                validator: (v) => v == null || v.isEmpty ? 'Minimum yaş giriniz' : null,
+                onChanged: (v) => _minAge = int.tryParse(v),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                decoration: const InputDecoration(hintText: 'Maksimum Yaş'),
+                keyboardType: TextInputType.number,
+                validator: (v) => v == null || v.isEmpty ? 'Maksimum yaş giriniz' : null,
+                onChanged: (v) => _maxAge = int.tryParse(v),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: gender,
+                value: _gender,
                 items: const [
                   DropdownMenuItem(value: 'Kadın', child: Text('Kadın')),
                   DropdownMenuItem(value: 'Erkek', child: Text('Erkek')),
                 ],
-                onChanged: (v) => setState(() => gender = v ?? 'Kadın'),
-                decoration: const InputDecoration(labelText: 'Cinsiyet'),
+                onChanged: (val) => setState(() => _gender = val),
+                decoration: const InputDecoration(hintText: 'Cinsiyet'),
+                validator: (value) => value == null ? 'Cinsiyet seçiniz' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Şehir'),
-                onChanged: (v) => city = v,
+                decoration: const InputDecoration(hintText: 'Şehir'),
                 validator: (v) => v == null || v.isEmpty ? 'Şehir giriniz' : null,
+                onChanged: (v) => _city = v,
               ),
               const SizedBox(height: 24),
-              if (errorMessage != null)
-                Text(
-                  errorMessage!,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: Theme.of(context).colorScheme.error),
-                ),
-              const SizedBox(height: 8),
-              isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _submit();
-                        }
-                      },
-                      child: const Text('Soruyu Gönder'),
-                    ),
+              if (_errorMessage != null)
+                Text(_errorMessage!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _submit,
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Soruyu Gönder'),
+              ),
             ],
           ),
         ),

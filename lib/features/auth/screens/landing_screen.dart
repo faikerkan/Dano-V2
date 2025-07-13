@@ -8,27 +8,29 @@ class LandingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('DANO'),
-        centerTitle: true,
-      ),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Hoş geldin! DANO ile anonim olarak tavsiye al.',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              'DANO\'ya Hoş Geldin!',
+              style: Theme.of(context).textTheme.headline1,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
+            Text(
+              'Anonim, güvenli ve samimi danışmanlık platformu.',
+              style: Theme.of(context).textTheme.bodyText1,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 48),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
                 );
               },
               child: const Text('Giriş Yap'),
@@ -38,7 +40,7 @@ class LandingScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  MaterialPageRoute(builder: (context) => const RegisterScreen()),
                 );
               },
               child: const Text('Kayıt Ol'),

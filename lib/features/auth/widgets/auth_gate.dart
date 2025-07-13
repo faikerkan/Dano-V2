@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../question/screens/home_screen.dart';
 import '../screens/landing_screen.dart';
 
 class AuthGate extends StatelessWidget {
@@ -16,10 +17,7 @@ class AuthGate extends StatelessWidget {
           );
         }
         if (snapshot.hasData) {
-          // TODO: HomeScreen ile değiştirilecek
-          return const Scaffold(
-            body: Center(child: Text('Giriş başarılı! (HomeScreen placeholder)')),
-          );
+          return const HomeScreen();
         }
         return const LandingScreen();
       },

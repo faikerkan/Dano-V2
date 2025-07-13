@@ -18,8 +18,8 @@ class DanoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'DANO',
       debugShowCheckedModeBanner: false,
+      title: 'DANO',
       theme: DanoTheme.darkTheme,
       home: const AuthGate(),
     );

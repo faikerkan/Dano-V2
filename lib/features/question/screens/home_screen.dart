@@ -8,14 +8,9 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      return const Scaffold(
-        body: Center(child: Text('Kullanıcı bulunamadı.')), // Türkçe
-      );
-    }
+    final uid = FirebaseAuth.instance.currentUser!.uid;
     return Scaffold(
-      appBar: AppBar(title: const Text('Gelen Sorularım')),
+      appBar: AppBar(title: const Text('Gelen Kutusu')),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -27,27 +22,23 @@ class HomeScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) {
-            return const Center(child: Text('Bir hata oluştu.'));
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('Henüz atanmış bir sorunuz yok.'));
           }
-          final docs = snapshot.data?.docs ?? [];
-          if (docs.isEmpty) {
-            return const Center(child: Text('Henüz sana atanmış bir soru yok.'));
-          }
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, i) {
-              final data = docs[i].data() as Map<String, dynamic>;
+          final questions = snapshot.data!.docs;
+          return ListView.separated(
+            itemCount: questions.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final q = questions[index];
               return ListTile(
-                title: Text(data['questionText'] ?? ''),
-                subtitle: Text(data['status'] ?? ''),
+                title: Text(q['questionText'] ?? ''),
+                subtitle: Text(q['status'] ?? ''),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => QuestionDetailScreen(
-                        questionId: data['questionId'],
-                      ),
+                      builder: (_) => QuestionDetailScreen(questionId: q.id),
                     ),
                   );
                 },
@@ -58,7 +49,6 @@ class HomeScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Soru sorma akışına yönlendir
           Navigator.pushNamed(context, '/ask');
         },
         child: const Icon(Icons.add),

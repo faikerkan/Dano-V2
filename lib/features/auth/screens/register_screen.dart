@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -11,72 +11,63 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  String email = '';
-  String password = '';
-  String nickname = '';
-  String gender = 'Kadın';
-  String city = '';
-  DateTime? birthDate;
-  bool isLoading = false;
-  String? errorMessage;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nicknameController = TextEditingController();
+  final TextEditingController _sehirController = TextEditingController();
+  DateTime? _birthDate;
+  String? _gender;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   Future<void> _register() async {
     setState(() {
-      isLoading = true;
-      errorMessage = null;
+      _isLoading = true;
+      _errorMessage = null;
     });
     try {
-      // Nickname benzersizliğini kontrol et
-      final existing = await FirebaseFirestore.instance
-          .collection('users')
-          .where('nickname', isEqualTo: nickname.trim())
-          .get();
-      if (existing.docs.isNotEmpty) {
-        setState(() {
-          errorMessage = 'Bu kullanıcı adı zaten alınmış. Lütfen başka bir tane dene.';
-          isLoading = false;
-        });
-        return;
-      }
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
+      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
-        'email': email.trim(),
-        'nickname': nickname.trim(),
-        'gender': gender,
-        'sehir': city.trim(),
-        'birthDate': birthDate != null ? Timestamp.fromDate(birthDate!) : null,
+      await FirebaseFirestore.instance.collection('users').doc(credential.user!.uid).set({
+        'email': _emailController.text.trim(),
+        'nickname': _nicknameController.text.trim(),
+        'gender': _gender,
+        'sehir': _sehirController.text.trim(),
+        'birthDate': Timestamp.fromDate(_birthDate!),
         'points': 0,
         'hasCompletedOnboarding': false,
+        'fcmToken': '',
         'createdAt': FieldValue.serverTimestamp(),
       });
-      Navigator.of(context).pop();
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+      });
     } catch (e) {
       setState(() {
-        errorMessage = 'Kayıt başarısız: 
-${e.toString()}';
+        _errorMessage = 'Bir hata oluştu. Lütfen tekrar deneyin.';
       });
     } finally {
       setState(() {
-        isLoading = false;
+        _isLoading = false;
       });
     }
   }
 
-  Future<void> _pickBirthDate() async {
+  Future<void> _selectBirthDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime(now.year - 18),
-      firstDate: DateTime(now.year - 100),
-      lastDate: DateTime(now.year - 18),
+      firstDate: DateTime(1940),
+      lastDate: DateTime(now.year - 13),
       locale: const Locale('tr'),
     );
     if (picked != null) {
       setState(() {
-        birthDate = picked;
+        _birthDate = picked;
       });
     }
   }
@@ -86,88 +77,80 @@ ${e.toString()}';
     return Scaffold(
       appBar: AppBar(title: const Text('Kayıt Ol')),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(32.0),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TextFormField(
-                  decoration: const InputDecoration(labelText: 'E-posta'),
-                  keyboardType: TextInputType.emailAddress,
-                  onChanged: (v) => email = v,
-                  validator: (v) => v == null || v.isEmpty ? 'E-posta giriniz' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Şifre'),
-                  obscureText: true,
-                  onChanged: (v) => password = v,
-                  validator: (v) => v == null || v.length < 6 ? 'En az 6 karakter' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Takma Ad (nickname)'),
-                  onChanged: (v) => nickname = v,
-                  validator: (v) => v == null || v.isEmpty ? 'Takma ad giriniz' : null,
+                  controller: _nicknameController,
+                  decoration: const InputDecoration(hintText: 'Takma Ad'),
+                  validator: (value) => value == null || value.isEmpty ? 'Takma ad giriniz' : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: gender,
+                  value: _gender,
                   items: const [
                     DropdownMenuItem(value: 'Kadın', child: Text('Kadın')),
                     DropdownMenuItem(value: 'Erkek', child: Text('Erkek')),
                   ],
-                  onChanged: (v) => setState(() => gender = v ?? 'Kadın'),
-                  decoration: const InputDecoration(labelText: 'Cinsiyet'),
+                  onChanged: (val) => setState(() => _gender = val),
+                  decoration: const InputDecoration(hintText: 'Cinsiyet'),
+                  validator: (value) => value == null ? 'Cinsiyet seçiniz' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
-                  decoration: const InputDecoration(labelText: 'Şehir'),
-                  onChanged: (v) => city = v,
-                  validator: (v) => v == null || v.isEmpty ? 'Şehir giriniz' : null,
+                  controller: _sehirController,
+                  decoration: const InputDecoration(hintText: 'Şehir'),
+                  validator: (value) => value == null || value.isEmpty ? 'Şehir giriniz' : null,
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        birthDate == null
-                            ? 'Doğum tarihi seçiniz'
-                            : 'Doğum Tarihi: ${birthDate!.day}.${birthDate!.month}.${birthDate!.year}',
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: _pickBirthDate,
-                      child: const Text('Seç'),
-                    ),
-                  ],
+                InkWell(
+                  onTap: _selectBirthDate,
+                  child: InputDecorator(
+                    decoration: const InputDecoration(hintText: 'Doğum Tarihi'),
+                    child: Text(_birthDate == null
+                        ? 'Doğum tarihi seçiniz'
+                        : '${_birthDate!.day}.${_birthDate!.month}.${_birthDate!.year}'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(hintText: 'E-posta'),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) => value == null || value.isEmpty ? 'E-posta giriniz' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(hintText: 'Şifre'),
+                  obscureText: true,
+                  validator: (value) => value == null || value.length < 6 ? 'Şifre en az 6 karakter olmalı' : null,
                 ),
                 const SizedBox(height: 24),
-                if (errorMessage != null)
-                  Text(
-                    errorMessage!,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: Theme.of(context).colorScheme.error),
-                  ),
+                if (_errorMessage != null)
+                  Text(_errorMessage!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
                 const SizedBox(height: 8),
-                isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate() && birthDate != null) {
+                ElevatedButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          if (_formKey.currentState!.validate() && _birthDate != null) {
                             _register();
-                          } else if (birthDate == null) {
+                          } else if (_birthDate == null) {
                             setState(() {
-                              errorMessage = 'Doğum tarihi seçiniz';
+                              _errorMessage = 'Doğum tarihi seçiniz';
                             });
                           }
                         },
-                        child: const Text('Kayıt Ol'),
-                      ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Kayıt Ol'),
+                ),
               ],
             ),
           ),
